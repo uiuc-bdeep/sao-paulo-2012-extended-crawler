@@ -25,7 +25,7 @@ def make_csv(week,day):
 	logger.info("Creating CSV file for week: "+str(week)+"day "+str(day))
 
 	# Create file name.
-	MAIN_NAME = "extended-crawler-"
+	MAIN_NAME = "git-extended-crawler-"
 	INCREMENTAL_FILENAME_SUFFIX = str(week)+"-"+str(day)
 	NAME_EXTENSION = ".csv"
 	OUTPUT_DIR = "/data/Congestion/stream/extended-crawler/"
