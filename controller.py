@@ -35,7 +35,7 @@ client = MongoClient(os.environ['DB_PORT_27017_TCP_ADDR'],27017)
 db = client.trial
 
 # Global variable to keep track of week number.
-week_number = 28
+week_number = 0
 
 #-----------------------------------------------------------------------#
 #						Function: Extended Crawler Init					#
@@ -63,8 +63,8 @@ db = client.trial
 # Non-stop loop to start weekly crawls.
 while True:
 	# Scheduled start time for normal-crawler for every week.
-	start_day = "Tuesday"
-	start_hour = "0"
+	start_day = "Sunday"
+	start_hour = "15"
 	start_min = "15"
 	# start_day = "Thursday"
 	# start_hour = "18"
