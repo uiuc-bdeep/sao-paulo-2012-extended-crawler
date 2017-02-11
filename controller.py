@@ -64,7 +64,7 @@ db = client.trial
 while True:
 	# Scheduled start time for normal-crawler for every week.
 	start_day = "Sunday"
-	start_hour = "15"
+	start_hour = "20"
 	start_min = "15"
 	# start_day = "Thursday"
 	# start_hour = "18"
