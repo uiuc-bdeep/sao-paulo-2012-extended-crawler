@@ -2,8 +2,8 @@
 	File Name: data_loader.py
 	Author: Surya Teja Tadigadapa (tadigad2@illinois.edu)
 	Maintainer: Surya Teja Tadigadapa (tadigad2@illinois.edu)
-	Description:	
-		This script parses data from the CSV Trip Survey and creates a random sample of 
+	Description:
+		This script parses data from the CSV Trip Survey and creates a random sample of
 		20 Percent and then creates a JSON file for each day of the week.
 		A week number (string), city and survey year are added to the JSON Objects.
 		A datestamp for every day of the week is also added.
@@ -22,18 +22,38 @@ import requests
 from pymongo import MongoClient
 
 #-----------------------------------------------------------------------#
+#						Function: Crawler Logger Init    				#
+#-----------------------------------------------------------------------#
+def crawler_logger_init():
+	# Create log.
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.INFO)
+
+	# Create the log handler & reset every week.
+	lh = logging.FileHandler("extended_crawler_log.txt")
+
+	# Format the log.
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+	lh.setFormatter(formatter)
+
+	# Add handler to the logger object.
+	logger.addHandler(lh)
+	return logger
+
+
+#-----------------------------------------------------------------------#
 #							Function: Load Data							#
 #-----------------------------------------------------------------------#
 def load_data(week_number):
 	# Open Log and log date.
-	logger = logging.getLogger("extended_crawler.data_loader")
+	logger = crawler_logger_init()
 	logger.info("Loading data for week: "+str(week_number))
 
 	# Set up database connection.
 	client = MongoClient(os.environ['DB_PORT_27017_TCP_ADDR'],27017)
 	db = client.trial
 	record = db.try0
-	
+
 	# Open CSV file, read headers and get length of data.
 	dataFile = open('congestion_survey.csv')
 	traffic_data_sheet = csv.reader(dataFile)
@@ -142,7 +162,7 @@ def load_data(week_number):
 				"distance": "-2",
 				"time": "-2",
 				"traffic": "-2"
-			
+
 			},
 			"m60":{
 				"distance": "-2",
@@ -195,7 +215,7 @@ def load_data(week_number):
 				"traffic": "-2"
 			}
 		}
-		
+
 		# Append every JSON trip into the list.
 		formatted_data.append(traffic_data_dict)
 
@@ -251,24 +271,24 @@ def load_data(week_number):
 	body_wednesday_rand_items = json.dumps(wednesday_rand_items, sort_keys = True, indent = 4, separators = (',',':'))
 	body_thursday_rand_items = json.dumps(thursday_rand_items, sort_keys = True, indent = 4, separators = (',',':'))
 	body_friday_rand_items = json.dumps(friday_rand_items, sort_keys = True, indent = 4, separators = (',',':'))
-	f = open('20percent_monday.json', 'w')  
+	f = open('20percent_monday.json', 'w')
 	f.write(body_monday_rand_items)
 	f.close()
-	f = open('20percent_tuesday.json', 'w')  
+	f = open('20percent_tuesday.json', 'w')
 	f.write(body_tuesday_rand_items)
 	f.close()
-	f = open('20percent_wednesday.json', 'w')  
+	f = open('20percent_wednesday.json', 'w')
 	f.write(body_wednesday_rand_items)
 	f.close()
-	f = open('20percent_thursday.json', 'w')  
+	f = open('20percent_thursday.json', 'w')
 	f.write(body_thursday_rand_items)
 	f.close()
-	f = open('20percent_friday.json', 'w')  
+	f = open('20percent_friday.json', 'w')
 	f.write(body_friday_rand_items)
 	f.close()
 	logger.info("Wrote JSON files containing random sample of trips.")
 
-	# Push JSON Objects from the file into the database.	
+	# Push JSON Objects from the file into the database.
 	page = open("20percent_monday.json", 'r')
 	parsed = json.loads(page.read())
 	for item in parsed:
@@ -297,7 +317,7 @@ def load_data(week_number):
 	logger.info("Loaded data into the database.")
 
 	# Send notification to Slack.
-	url = "https://hooks.slack.com/services/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"
+	url = "https://hooks.slack.com/services/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"
 	data_loader_msg = "Sao Paulo 2012 Survey Extended-Crawler: Data loading succesful."
 	payload={"text": data_loader_msg}
 	try:

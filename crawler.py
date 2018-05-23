@@ -49,6 +49,7 @@ def crawl_trip(jsonObj):
 	# Create URL.
 	base_url = "https://maps.googleapis.com/maps/api/distancematrix/json?"
 	final_url = base_url+"origins="+lat_o+","+lon_o+"&destinations="+lat_d+","+lon_d+"&mode="+t_mode+"&departure_time=now&key=AIzaSyADEXdHuYJDPa2K5oSzBxAUxCGEzzRvzi0"
+
 	
 	# Query Google API.
 	try:

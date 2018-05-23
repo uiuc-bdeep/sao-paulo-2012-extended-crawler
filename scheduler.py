@@ -2,11 +2,11 @@
 	File Name: scheduler.py
 	Author: Surya Teja Tadigadapa (tadigad2@illinois.edu)
 	Maintainer: Surya Teja Tadigadapa (tadigad2@illinois.edu)
-	Description:	
-		This script pulls data for the week from the database. The trips are converted to 
-		server time, replicated for all variations (m120 to t0 to p120) and scheduled for 
-		crawls. The crawler is called for every trip. The call to the CSV creator is 
-		scheduled at 6:01am server time, 1:01am central time everyday for the days trips. 
+	Description:
+		This script pulls data for the week from the database. The trips are converted to
+		server time, replicated for all variations (m120 to t0 to p120) and scheduled for
+		crawls. The crawler is called for every trip. The call to the CSV creator is
+		scheduled at 6:01am server time, 1:01am central time everyday for the days trips.
 		The script then returns control to the controller on Saturday at 7:00am server time,
 		so 2:00am central time.
 '''
@@ -30,12 +30,32 @@ from pymongo import MongoClient
 schd_bool = 0
 
 #-----------------------------------------------------------------------#
+#						Function: Crawler Logger Init    				#
+#-----------------------------------------------------------------------#
+def crawler_logger_init():
+	# Create log.
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
+
+	# Create the log handler & reset every week.
+	lh = logging.FileHandler("extended_crawler_log.txt")
+
+	# Format the log.
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+	lh.setFormatter(formatter)
+
+	# Add handler to the logger object.
+	logger.addHandler(lh)
+	return logger
+
+#-----------------------------------------------------------------------#
 #						Function: Schedule Trips						#
 #-----------------------------------------------------------------------#
-def schedule_trips(week):
+def schedule_trips(week, logger):
 	# Open Log.
-	logger = logging.getLogger("normal_crawler.scheduler")
+	logger = crawler_logger_init()
 	logger.info("Scheduling trips for week: "+str(week))
+	print("Scheduling trips for week: " + str(week))
 
 	# Set up database connection.
 	client = MongoClient(os.environ['DB_PORT_27017_TCP_ADDR'],27017)
@@ -196,7 +216,7 @@ def schedule_trips(week):
 		t_obj = copy.deepcopy(trip_list[num])
 		t_obj['mode'] = "driving"
 		t_obj['travel_type'] = "p100"
-		t_obj['timestamp']['hours'] = t_obj['timestamp']['hours'] + 1	
+		t_obj['timestamp']['hours'] = t_obj['timestamp']['hours'] + 1
 		if ((t_obj['timestamp']['minutes'] + 40) >= 60):
 			t_obj['timestamp']['minutes'] = 40 - (60 - t_obj['timestamp']['minutes'])
 			t_obj['timestamp']['hours'] = t_obj['timestamp']['hours'] + 1
@@ -221,9 +241,8 @@ def schedule_trips(week):
 		trip_list[num]['mode'] = "driving"
 		trip_list[num]['travel_type'] = "t0"
 
-	logger.info("Number of trips after replication: "+str(len(trip_list)))
+	logger.info("Number of trips after replication: " + str(len(trip_list)))
 	logger.info("Replicated all trips")
-
 	#-----------------------------------------------------------------------#
 	#						Function: Crawl 								#
 	#-----------------------------------------------------------------------#
@@ -257,18 +276,18 @@ def schedule_trips(week):
 	# Schedule all instances for every trip.
 	for item in range(len(trip_list)):
 		s_time = str(trip_list[item]['timestamp']['hours'])+":"+str(trip_list[item]['timestamp']['minutes'])
-		if trip_list[item]['timestamp']['day']==0:
+		if trip_list[item]['timestamp']['day'] == 0:
 			schedule.every().monday.at(s_time).do(crawl,trip_list[item])
-		elif trip_list[item]['timestamp']['day']==1:
-			schedule.every().tuesday.at(s_time).do(crawl,trip_list[item])
-		elif trip_list[item]['timestamp']['day']==2:
-			schedule.every().wednesday.at(s_time).do(crawl,trip_list[item])
-		elif trip_list[item]['timestamp']['day']==3:
-			schedule.every().thursday.at(s_time).do(crawl,trip_list[item])
-		elif trip_list[item]['timestamp']['day']==4:
+		elif trip_list[item]['timestamp']['day'] == 1:
+		 	schedule.every().tuesday.at(s_time).do(crawl,trip_list[item])
+		elif trip_list[item]['timestamp']['day'] == 2:
+		 	schedule.every().wednesday.at(s_time).do(crawl,trip_list[item])
+		elif trip_list[item]['timestamp']['day'] == 3:
+		 	schedule.every().thursday.at(s_time).do(crawl,trip_list[item])
+		elif trip_list[item]['timestamp']['day'] == 4:
 			schedule.every().friday.at(s_time).do(crawl,trip_list[item])
-		elif trip_list[item]['timestamp']['day']==5:
-			schedule.every().saturday.at(s_time).do(crawl,trip_list[item])
+		elif trip_list[item]['timestamp']['day'] == 5:
+		 	schedule.every().saturday.at(s_time).do(crawl,trip_list[item])
 
 	# Schedule writing CSV at 3:01am from tuesday to saturday.
 	schedule.every().tuesday.at("6:01").do(csv_creator,week,0)
@@ -280,17 +299,17 @@ def schedule_trips(week):
 	logger.info("Scheduled All Trips")
 
 	# Send notification to Slack.
-	url = "https://hooks.slack.com/services/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"
+	slack_url = "https://hooks.slack.com/services/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"
 	schedule_trips_msg = "Sao Paulo 2012 Survey Extended-Crawler: Scheduling trips succesful."
 	payload={"text": schedule_trips_msg}
 	try:
-		r = requests.post(url, data=json.dumps(payload))
+		r = requests.post(slack_url, data=json.dumps(payload))
 	except requests.exceptions.RequestException as e:
 		logger.info("Sao Paulo 2012 Survey Extended-Crawler: Error while sending scheduler Slack notification.")
 		logger.info(e)
 		logger.info(schedule_trips_msg)
 
 	# Loop till all trips crawled.
-	while True and schd_bool==0:
-		schedule.run_pending()
-		time.sleep(1)
+	# while True and schd_bool==0:
+	# 	schedule.run_pending()
+	# 	time.sleep(1)

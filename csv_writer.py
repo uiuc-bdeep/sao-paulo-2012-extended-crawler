@@ -1,8 +1,8 @@
 '''
-	File Name: crawler.py
+	File Name: csv_writer.py
 	Author: Surya Teja Tadigadapa (tadigad2@illinois.edu)
 	Maintainer: Surya Teja Tadigadapa (tadigad2@illinois.edu)
-	Description:	
+	Description:
 		This script pulls trips from the database, checks for errors, write trips to a JSON
 		file and then output to a CSV file.
 '''
@@ -17,18 +17,37 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps
 
 #-----------------------------------------------------------------------#
+#						Function: Crawler Logger Init    				#
+#-----------------------------------------------------------------------#
+def crawler_logger_init():
+	# Create log.
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
+
+	# Create the log handler & reset every week.
+	lh = logging.FileHandler("extended_crawler_log.txt")
+
+	# Format the log.
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+	lh.setFormatter(formatter)
+
+	# Add handler to the logger object.
+	logger.addHandler(lh)
+	return logger
+
+#-----------------------------------------------------------------------#
 #							Function: Make CSV 							#
 #-----------------------------------------------------------------------#
 def make_csv(week,day):
 	# Open Log and add details.
-	logger = logging.getLogger("normal_crawler.csv_writer")
-	logger.info("Creating CSV file for week: "+str(week)+"day "+str(day))
+	logger = crawler_logger_init()
+	logger.info("Creating CSV file for week: "+str(week)+" day "+str(day))
 
 	# Create file name.
-	MAIN_NAME = "git-extended-crawler-"
+	MAIN_NAME = "sao-paulo-crawler-"
 	INCREMENTAL_FILENAME_SUFFIX = str(week)+"-"+str(day)
 	NAME_EXTENSION = ".csv"
-	OUTPUT_DIR = "/data/Congestion/stream/extended-crawler/"
+	OUTPUT_DIR = "/data/"
 	FINAL_NAME = OUTPUT_DIR+MAIN_NAME+INCREMENTAL_FILENAME_SUFFIX+NAME_EXTENSION
 
 	# Set up database connection.
@@ -44,7 +63,6 @@ def make_csv(week,day):
 	# Initialize number of error crawls.
 	error_crawls = 0
 
-	# 
 	for num in range(length):
 		for x in range (0,24):
 			for y in range (0,3):
@@ -56,9 +74,10 @@ def make_csv(week,day):
 				l[num][temp_time2] = "0"
 
 	for num1 in range(length):
+		print("writing " + str(num1))
 		temp_hours = l[num1]["timestamp"]["hours"]
 		temp_mins = l[num1]["timestamp"]["minutes"]
-		
+
 		if temp_mins < 20:
 			temp_mins = 0
 		elif temp_mins < 40:
@@ -150,7 +169,7 @@ def make_csv(week,day):
 			p40_hours = (p40_hours - 24)
 		p40_timestring1 = "Time.car"+str(p40_hours)+"_"+str(p40_mins)
 		p40_timestring2 = "Distance.car"+str(p40_hours)+"_"+str(p40_mins)
-		
+
 		p60_hours = temp_hours + 1
 		p60_mins = temp_mins
 		if p60_hours >= 24 :
@@ -222,6 +241,7 @@ def make_csv(week,day):
 
 	file = open('json_from_db.json','r')
 	x = json.loads(file.read())
+	#import pdb;pdb.set_trace()
 
 	f = open(FINAL_NAME, "ab+")
 	z = csv.writer(f)
@@ -234,7 +254,7 @@ def make_csv(week,day):
 	print ("Done. CSV File Created for Week: "+str(week)+" Day: "+str(day))
 
 	# Send Slack notification after successfully writing CSV file.
-	url = "https://hooks.slack.com/services/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"
+	url = "https://hooks.slack.com/services/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"
 	csv_msg = "Sao Paulo 2012 Survey Extended-Crawler: CSV for week-"+str(week)+"-day-"+str(day)+" has been written successfully to the shared drive."
 	payload1={"text": csv_msg}
 	try:

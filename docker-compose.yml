@@ -3,7 +3,8 @@ extended-crawler:
   command: python -u controller.py
   volumes:
     - .:/todo
-    - /data/Congestion/stream:/data/Congestion/stream
+    # - /data/Congestion/stream:/data/Congestion/stream
+    - /home/ubuntu/sao-paulo-test:/data
   links:
     - db
 db:
